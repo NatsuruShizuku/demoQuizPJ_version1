@@ -21,10 +21,11 @@ class _ReadModePageState extends State<ReadModePage> {
   List<UserAnswer> userAnswer = List<UserAnswer>.empty();
   int indexPage = 0;
   late SharedPreferences prefs;
-  CarouselController buttonCarouselController = CarouselController();
+  CarouselSliderController buttonCarouselController =
+      CarouselSliderController();
 
   Future<int> getIndexPageFromCache() {
-    if (prefs == null) return Future.value(0);
+    // if (prefs == null) return Future.value(0);
     return Future.value(prefs.getInt(
         '${questionCategoryState.value.name}_${questionCategoryState.value.id}'));
   }
@@ -35,7 +36,8 @@ class _ReadModePageState extends State<ReadModePage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       prefs = await SharedPreferences.getInstance();
-      indexPage = await getIndexPageFromCache();
+      // indexPage = await getIndexPageFromCache();
+      indexPage = await getIndexPageFromCache(); //maybe error 
       Future.delayed(const Duration(microseconds: 500)).then((value) => {
             if (buttonCarouselController != null && !isEmptyQuestion.value)
               buttonCarouselController.animateToPage(indexPage ?? 0)
@@ -45,86 +47,96 @@ class _ReadModePageState extends State<ReadModePage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-        child: Scaffold(
-          appBar: AppBar(),
-          body: Container(
-            color: Colors.white,
-            child: FutureBuilder(
-              future: getQuestionByModule(questionCategoryState.value.id),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Text('Error: ${snapshot.error}'),
-                  );
-                } else if (snapshot.hasData) {
-                  var questions = snapshot.data as List<Question>;
-                  isEmptyQuestion.value = questions.isEmpty;
-                  return questions.isEmpty
-                      ? const Center(
-                          child: Text('This category contains no question'),
-                        )
-                      : Container(
-                          margin: const EdgeInsets.all(4),
-                          child: Card(
-                            elevation: 8,
-                            child: Container(
-                              padding: const EdgeInsets.only(
-                                  left: 4, right: 4, bottom: 4, top: 10),
-                              child: SingleChildScrollView(
-                                child: Column(
-                                  children: [
-                                    QuestionBody(
-                                      context: context,
-                                      controller: buttonCarouselController,
-                                      questions: questions,
-                                      userAnswers: userAnswer,
-                                    ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        ElevatedButton(
-                                            onPressed: () {
-                                              showAnswer(context);
-                                            },
-                                            child: const Padding(
-                                              padding: EdgeInsets.symmetric(
-                                                  horizontal: 16, vertical: 8),
-                                              child: Column(
-                                                children: [
-                                                  Icon(
-                                                    Icons.question_answer,
-                                                    color: Colors.grey,
-                                                  ),
-                                                  Text('Show Answer')
-                                                ],
-                                              ),
-                                            ))
-                                      ],
-                                    )
-                                  ],
-                                ),
+    return PopScope(
+      canPop: false, // หรือกำหนดเงื่อนไขให้ตรงตามกรณีของคุณ
+      onPopInvokedWithResult: (didPop,Object? result) {
+        showCloseDialog(questionCategoryState.value,didPop);
+      },
+      child: Scaffold(
+        appBar: AppBar(),
+        body: Container(
+          color: Colors.white,
+          child: FutureBuilder(
+            future: getQuestionByModule(questionCategoryState.value.id),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text('Error: ${snapshot.error}'),
+                );
+              } else if (snapshot.hasData) {
+                var questions = snapshot.data as List<Question>;
+                isEmptyQuestion.value = questions.isEmpty;
+                return questions.isEmpty
+                    ? const Center(
+                        child: Text('This category contains no question'),
+                      )
+                    : Container(
+                        margin: const EdgeInsets.all(4),
+                        child: Card(
+                          elevation: 8,
+                          child: Container(
+                            padding: const EdgeInsets.only(
+                                left: 4, right: 4, bottom: 4, top: 10),
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  QuestionBody(
+                                    context: context,
+                                    controller: buttonCarouselController,
+                                    questions: questions,
+                                    userAnswers: userAnswer,
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      ElevatedButton(
+                                          onPressed: () {
+                                            showAnswer(context);
+                                          },
+                                          child: const Padding(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 16, vertical: 8),
+                                            child: Column(
+                                              children: [
+                                                Icon(
+                                                  Icons.question_answer,
+                                                  color: Colors.grey,
+                                                ),
+                                                Text('Show Answer')
+                                              ],
+                                            ),
+                                          ))
+                                    ],
+                                  )
+                                ],
                               ),
                             ),
                           ),
-                        );
-                } else {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-              },
-            ),
+                        ),
+                      );
+              } else {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+            },
           ),
         ),
-        onWillPop: () async {
-          showCloseDialog(questionCategoryState.value);
-          return true;
-        });
+      ),
+      // onWillPop: () async {
+      //   showCloseDialog(questionCategoryState.value);
+      //   return true;
+      // }
+      
+    );
   }
 
-  void showCloseDialog(Category value) async {
+
+  void showCloseDialog(Category value,didPop) async {
+    if(didPop){
+      return;
+    }
+
     showDialog(
         context: context,
         builder: (_) => AlertDialog(
@@ -134,7 +146,9 @@ class _ReadModePageState extends State<ReadModePage> {
                 OutlinedButton(
                     onPressed: () {
                       Navigator.of(context).pop();
-                      Navigator.pop(context);
+                       WidgetsBinding.instance.addPostFrameCallback((_){
+                        Navigator.pop(context);
+                      });
                     },
                     child: const Text('No')),
                 OutlinedButton(
@@ -143,7 +157,10 @@ class _ReadModePageState extends State<ReadModePage> {
                           '${questionCategoryState.value.name}_${questionCategoryState.value.id}',
                           currentReadPage.value);
                       Navigator.of(context).pop();
-                      Navigator.pop(context);
+                      WidgetsBinding.instance.addPostFrameCallback((_){
+                        Navigator.pop(context);
+                      });
+                      // Navigator.pop(context);
                     },
                     child: const Text('Yes'))
               ],

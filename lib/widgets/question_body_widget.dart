@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import '../model/question.dart';
 import '../model/user_answer.dart';
 
+// ignore: must_be_immutable
 class QuestionBody extends StatelessWidget {
   QuestionBody(
       {super.key,
@@ -17,7 +18,8 @@ class QuestionBody extends StatelessWidget {
 
   BuildContext context;
   List<UserAnswer> userAnswers;
-  CarouselController controller;
+  // CarouselController controller;
+  CarouselSliderController controller;
   List<Question> questions;
 
   @override
@@ -56,7 +58,7 @@ class QuestionBody extends StatelessWidget {
                                       child: e.value.isImageQuestion == 0
                                           ? Container()
                                           : Image.network(
-                                              e.value.questionImage!!),
+                                              e.value.questionImage!),
                                     ),
                                   ),
                                   Expanded(

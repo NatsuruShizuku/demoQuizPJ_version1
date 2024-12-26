@@ -50,7 +50,8 @@ class _TestModePageState extends State<TestModePage>
 
   @override
   Widget build(BuildContext context) {
-    CarouselController buttonCarouselController = CarouselController();
+    // CarouselController buttonCarouselController = CarouselController();
+    CarouselSliderController buttonCarouselController = CarouselSliderController();
     return WillPopScope(
         child: Scaffold(
           appBar: AppBar(
